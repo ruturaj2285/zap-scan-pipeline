@@ -53,6 +53,24 @@ jobs:
         run: |
           kubectl cp zap1.yaml zap-5666bbc9d-n4ckl:/zap/wrk/zap.yaml -n $NAMESPACE_1
           kubectl cp swagger.json zap-5666bbc9d-n4ckl:/zap/swagger.json -n $NAMESPACE_1
+          
+      - name: Run ZAP scan inside pod
+        run: |
+          kubectl exec zap-5666bbc9d-n4ckl -n $NAMESPACE_1 -- bash -c "
+            pkill -f zap || true
+            pkill -f 'zap-2.16.1.jar' || true
+            rm -rf /home/zap/.ZAP
+            /zap/zap.sh -cmd \
+              -autorun /zap/wrk/zap.yaml \
+              -config dir.home=/zap/wrk \
+              -config dir.report=/zap/reports \
+              -config api.disablekey=true \
+              -config api.addrs.addr.name=.* \
+              -config api.addrs.addr.regex=true
+          "
+
+          
+          
 
           
 
