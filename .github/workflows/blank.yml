@@ -16,6 +16,9 @@ env:
   CLUSTER_NAME: jaime-poc
   NODE_DEPLOYMENT_FILE: deployment.yaml
   ZAP_DEPLOYMENT_FILE: deployment.yaml
+  NAMESPACE_1: jaime-poc-2285
+  NAMESPACE_2: jaime-poc-6460
+  
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -43,8 +46,15 @@ jobs:
 
       - name: get pods
         run: |
-          kubectl get pods -n jaime-poc-2285
-          kubectl get pods -n jaime-poc-6460
+          kubectl get pods -n $NAMESPACE_1
+          kubectl get pods -n $NAMESPACE_2
+
+      - name: copy files
+        run: |
+          kubectl cp zap1.yaml zap-5666bbc9d-n4ckl:/zap/wrk/zap.yaml -n $NAMESPACE_1
+          kubectl cp swagger.json zap-5666bbc9d-n4ckl:/zap/swagger.json -n $NAMESPACE_1
+
+          
 
 
       
