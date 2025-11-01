@@ -67,6 +67,7 @@ jobs:
         run: |
           echo "Running ZAP scan inside pod: $POD_NAME"
           kubectl exec -n $NAMESPACE_1 $POD_NAME -- ls /zap/reports
+          kubectl exec -n $NAMESPACE_1 $POD_NAME -- bash -c "pkill -f zap || true && pkill -f 'zap-2.16.1.jar' || true && rm -rf /home/zap/.ZAP && /zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml -config dir.home=/zap/wrk -config dir.report=/zap/reports -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true"
           # Example: run full scan command
           # kubectl exec -n $NAMESPACE_1 $POD_NAME -- /zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml
 
