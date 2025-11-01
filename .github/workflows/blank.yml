@@ -66,7 +66,7 @@ jobs:
       - name: Run ZAP scan inside pod
         run: |
           echo "Running ZAP scan inside pod: $POD_NAME"
-          kubectl exec -n $NAMESPACE_1 $POD_NAME -- ls 
+          kubectl exec -n $NAMESPACE_1 $POD_NAME -- ls /zap/reports
           # Example: run full scan command
           # kubectl exec -n $NAMESPACE_1 $POD_NAME -- /zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml
 
