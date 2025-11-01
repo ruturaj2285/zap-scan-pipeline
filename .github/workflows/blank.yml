@@ -74,6 +74,22 @@ jobs:
           # kubectl exec -n $NAMESPACE_1 $POD_NAME -- /zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml
 
 
+      - name: Copy report from pod to local
+        run: |
+          kubectl cp $NAMESPACE_1/$POD_NAME:/zap/reports/zap_api_report.html ./zap_api_report.html
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-api-report
+          path: zap_api_report.html
+          retention-days: 5
+
+      - name: Open report automatically (local use)
+        if: runner.os == 'Linux'
+        run: |
+          xdg-open zap_api_report.html || true
+
 
 
           
