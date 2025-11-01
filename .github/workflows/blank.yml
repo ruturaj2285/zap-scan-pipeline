@@ -63,6 +63,15 @@ jobs:
       #     kubectl exec -n jaime-poc-2285 zap-server-5f9cfcfb6b-x9rpp -- ls /zap/reports
 
 
+      - name: Run ZAP scan inside pod
+        run: |
+          echo "Running ZAP scan inside pod: $POD_NAME"
+          kubectl exec -n $NAMESPACE_1 $POD_NAME -- ls 
+          # Example: run full scan command
+          # kubectl exec -n $NAMESPACE_1 $POD_NAME -- /zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml
+
+
+
 
           
           
