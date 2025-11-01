@@ -46,28 +46,21 @@ jobs:
 
       - name: get pods
         run: |
-          kubectl get pods -n $NAMESPACE_1
-          kubectl get pods -n $NAMESPACE_2
+          # kubectl get pods -n $NAMESPACE_1
+          # kubectl get pods -n $NAMESPACE_2
+          POD_NAME=$(kubectl get pods -n $NAMESPACE_1 -l app=zap-server -o jsonpath='{.items[0].metadata.name}')
+          echo "POD_NAME=$POD_NAME" >> $GITHUB_ENV
+          echo "✅ Pod name found: $POD_NAME"
 
-      - name: copy files
-        run: |
-          kubectl cp zap1.yaml zap-5666bbc9d-n4ckl:/zap/wrk/zap.yaml -n $NAMESPACE_1
-          kubectl cp swagger.json zap-5666bbc9d-n4ckl:/zap/swagger.json -n $NAMESPACE_1
+      # - name: copy files
+      #   run: |
+      #     kubectl cp zap1.yaml zap-5666bbc9d-n4ckl:/zap/wrk/zap.yaml -n $NAMESPACE_1
+      #     kubectl cp swagger.json zap-5666bbc9d-n4ckl:/zap/swagger.json -n $NAMESPACE_1
           
-      - name: Run ZAP scan inside pod
-        run: |
-          kubectl exec zap-5666bbc9d-n4ckl -n $NAMESPACE_1 -- bash -c "
-            pkill -f zap || true
-            pkill -f 'zap-2.16.1.jar' || true
-            rm -rf /home/zap/.ZAP
-            /zap/zap.sh -cmd \
-              -autorun /zap/wrk/zap.yaml \
-              -config dir.home=/zap/wrk \
-              -config dir.report=/zap/reports \
-              -config api.disablekey=true \
-              -config api.addrs.addr.name=.* \
-              -config api.addrs.addr.regex=true
-          "
+      # - name: Run ZAP scan inside pod
+      #   run: |
+      #     kubectl exec -n jaime-poc-2285 zap-server-5f9cfcfb6b-x9rpp -- ls /zap/reports
+
 
 
           
