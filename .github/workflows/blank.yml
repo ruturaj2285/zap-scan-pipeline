@@ -15,7 +15,7 @@ env:
   ECR_REPO: my-node-app
   CLUSTER_NAME: jaime-poc
   NODE_DEPLOYMENT_FILE: deployment.yaml
-  ZAP_DEPLOYMENT_FILE: deployment.yaml
+  ZAP_DEPLOYMENT_FILE: zap-deployment.yaml
   NAMESPACE_1: jaime-poc-2285
   NAMESPACE_2: jaime-poc-6460
   
@@ -43,6 +43,12 @@ jobs:
 
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --region $AWS_REGION_1 --name $CLUSTER_NAME
+
+      - name: get pods
+        run: |
+          kubectl apply -f $NODE_DEPLOYMENT_FILE -n $NAMESPACE_1
+          kubectl apply -f $ZAP_DEPLOYMENT_FILE -n $NAMESPACE_1
+          
 
       - name: get pods
         run: |
