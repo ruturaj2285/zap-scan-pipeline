@@ -1,14 +1,11 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
 env:
   AWS_REGION: us-east-1
   AWS_REGION_1: ap-northeast-1
@@ -18,21 +15,16 @@ env:
   ZAP_DEPLOYMENT_FILE: zap-deployment.yaml
   NAMESPACE_1: jaime-poc-2285
   NAMESPACE_2: jaime-poc-6460
-  
+  APP_DIR: ./    # folder containing Dockerfile
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: self-hosted
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -41,16 +33,45 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image to ECR
+        id: build-image
+        env:
+          IMAGE_TAG: ${{ github.run_number }}
+        run: |
+          echo "🔧 Building Docker image..."
+          docker build -t $ECR_REPO:$IMAGE_TAG $APP_DIR
+          echo "🔐 Tagging image for ECR..."
+          ECR_URI="${{ steps.login-ecr.outputs.registry }}/$ECR_REPO:$IMAGE_TAG"
+          docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI
+          echo "🚀 Pushing image to ECR..."
+          docker push $ECR_URI
+          echo "IMAGE_URI=$ECR_URI" >> $GITHUB_ENV
+          echo "✅ Image pushed: $ECR_URI"
+
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --region $AWS_REGION_1 --name $CLUSTER_NAME
 
-      # - name: get pods
-      #   run: |
-      #     kubectl apply -f $NODE_DEPLOYMENT_FILE -n $NAMESPACE_1
-      #     kubectl apply -f $ZAP_DEPLOYMENT_FILE -n $NAMESPACE_1
-          
+      - name: Update image in Kubernetes deployment file
+        run: |
+          echo "🔄 Updating image in $NODE_DEPLOYMENT_FILE"
+          sed -i "s|image: .*|image: ${IMAGE_URI}|g" $NODE_DEPLOYMENT_FILE
+          echo "✅ Updated deployment image to: ${IMAGE_URI}"
 
-      - name: get pods
+      - name: Deploy updated Node app to EKS
+        run: |
+          echo "🚀 Applying Node.js deployment to EKS..."
+          kubectl apply -f $NODE_DEPLOYMENT_FILE -n $NAMESPACE_1
+          kubectl rollout status deployment/my-node-app -n $NAMESPACE_1 --timeout=120s
+          echo "✅ Node app deployed successfully!"
+
+      # -------------------------------
+      # ZAP SCAN STEPS
+      # -------------------------------
+      - name: Get ZAP Pod details
         run: |
           kubectl get pods -n $NAMESPACE_1
           kubectl get pods -n $NAMESPACE_2
@@ -59,12 +80,11 @@ jobs:
           echo "POD_NAME=$POD_NAME" >> $GITHUB_ENV
           echo "✅ Pod name found: $POD_NAME"
 
-      - name: copy files
+      - name: Copy files into ZAP pod
         run: |
           kubectl cp zap.yaml $POD_NAME:/zap/wrk/zap.yaml -n $NAMESPACE_1
           kubectl cp swagger1.json $POD_NAME:/zap/swagger.json -n $NAMESPACE_1
           kubectl cp 1.yaml $POD_NAME:/zap/2.yaml -n $NAMESPACE_1
-       
 
       - name: Run ZAP scan inside pod
         run: |
@@ -72,15 +92,12 @@ jobs:
           kubectl exec -n $NAMESPACE_1 $POD_NAME -- pwd
           kubectl exec -n $NAMESPACE_1 $POD_NAME -- ls /zap/reports
           kubectl exec -n $NAMESPACE_1 $POD_NAME -- bash -c "/zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml -config dir.home=/zap/wrk -config dir.report=/zap/reports -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true" || true
-          # Example: run full scan command
-          # kubectl exec -n $NAMESPACE_1 $POD_NAME -- /zap/zap.sh -cmd -autorun /zap/wrk/zap.yaml
 
-
-      - name: Copy report from pod to local
+      - name: Copy ZAP report from pod to local
         run: |
           kubectl cp $NAMESPACE_1/$POD_NAME:/zap/reports/zap_api_report.html ./zap_api_report.html
 
-      - name: Upload report as artifact
+      - name: Upload ZAP report as artifact
         uses: actions/upload-artifact@v4
         with:
           name: zap-api-report
@@ -91,13 +108,3 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           xdg-open zap_api_report.html || true
-
-
-
-          
-          
-
-          
-
-
-      
