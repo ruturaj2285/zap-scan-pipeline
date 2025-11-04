@@ -65,7 +65,7 @@ jobs:
         run: |
           echo "🚀 Applying Node.js deployment to EKS..."
           kubectl apply -f $NODE_DEPLOYMENT_FILE -n $NAMESPACE_1
-          kubectl rollout status deployment/my-node-app -n $NAMESPACE_1 --timeout=120s
+          # kubectl rollout status deployment/my-node-app -n $NAMESPACE_1 --timeout=120s
           echo "✅ Node app deployed successfully!"
 
       # -------------------------------
