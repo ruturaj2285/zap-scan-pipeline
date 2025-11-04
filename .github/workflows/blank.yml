@@ -44,29 +44,29 @@ jobs:
         run: |
           echo "🔧 Building Docker image..."
           docker build -t $ECR_REPO:$IMAGE_TAG $APP_DIR
-          echo "🔐 Tagging image for ECR..."
+          echo "Tagging image for ECR..."
           ECR_URI="${{ steps.login-ecr.outputs.registry }}/$ECR_REPO:$IMAGE_TAG"
           docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI
-          echo "🚀 Pushing image to ECR..."
+          echo "Pushing image to ECR..."
           docker push $ECR_URI
           echo "IMAGE_URI=$ECR_URI" >> $GITHUB_ENV
-          echo "✅ Image pushed: $ECR_URI"
+          echo "Image pushed: $ECR_URI"
 
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --region $AWS_REGION_1 --name $CLUSTER_NAME
 
       - name: Update image in Kubernetes deployment file
         run: |
-          echo "🔄 Updating image in $NODE_DEPLOYMENT_FILE"
+          echo "Updating image in $NODE_DEPLOYMENT_FILE"
           sed -i "s|image: .*|image: ${IMAGE_URI}|g" $NODE_DEPLOYMENT_FILE
-          echo "✅ Updated deployment image to: ${IMAGE_URI}"
+          echo "Updated deployment image to: ${IMAGE_URI}"
 
       - name: Deploy updated Node app to EKS
         run: |
-          echo "🚀 Applying Node.js deployment to EKS..."
+          echo "Applying Node.js deployment to EKS..."
           kubectl apply -f $NODE_DEPLOYMENT_FILE -n $NAMESPACE_1
           # kubectl rollout status deployment/my-node-app -n $NAMESPACE_1 --timeout=120s
-          echo "✅ Node app deployed successfully!"
+          echo "Node app deployed successfully!"
 
       # -------------------------------
       # ZAP SCAN STEPS
@@ -78,7 +78,7 @@ jobs:
           kubectl get pods -n $NAMESPACE_1 --show-labels
           POD_NAME=$(kubectl get pods -n $NAMESPACE_1 -l app=zap -o jsonpath='{.items[0].metadata.name}')
           echo "POD_NAME=$POD_NAME" >> $GITHUB_ENV
-          echo "✅ Pod name found: $POD_NAME"
+          echo "Pod name found: $POD_NAME"
 
       - name: Copy files into ZAP pod
         run: |
@@ -112,7 +112,7 @@ jobs:
 
       - name: Print Artifact Download URL
         run: |
-          echo "✅ ZAP Report successfully uploaded."
-          echo "📄 You can download the report from this link:"
-          echo "👉 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
+          echo "ZAP Report successfully uploaded."
+          echo "You can download the report from this link:"
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
 
