@@ -9,7 +9,7 @@ on:
 env:
   AWS_REGION: us-east-1
   AWS_REGION_1: ap-northeast-1
-  ECR_REPO: my-node-app
+  ECR_REPO: node-poc
   CLUSTER_NAME: jaime-poc
   NODE_DEPLOYMENT_FILE: deployment.yaml
   ZAP_DEPLOYMENT_FILE: zap-deployment.yaml
