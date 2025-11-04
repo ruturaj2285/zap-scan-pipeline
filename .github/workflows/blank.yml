@@ -104,7 +104,15 @@ jobs:
           path: zap_api_report.html
           retention-days: 5
 
-      - name: Open report automatically (local use)
-        if: runner.os == 'Linux'
+      # - name: Open report automatically (local use)
+      #   if: runner.os == 'Linux'
+      #   run: |
+      #     xdg-open zap_api_report.html || true
+
+
+      - name: Print Artifact Download URL
         run: |
-          xdg-open zap_api_report.html || true
+          echo "✅ ZAP Report successfully uploaded."
+          echo "📄 You can download the report from this link:"
+          echo "👉 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
+
